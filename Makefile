@@ -9,7 +9,7 @@ dist:
 		-v \
 		-x \
 		-o $(OUT)/$(BIN) \
-		$(SRC)
+		./$(SRC)
 
 clean:
 	rm -rf $(OUT)
