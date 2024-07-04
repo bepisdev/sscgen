@@ -11,7 +11,10 @@ dist:
 		-o $(OUT)/$(BIN) \
 		./$(SRC)
 
+test:
+	$(GOX) test ../..
+
 clean:
 	rm -rf $(OUT)
 
-.PHONY: clean
+.PHONY: test clean
