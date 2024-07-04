@@ -23,28 +23,68 @@ import (
 // Global constant to hold program version
 const SSCGEN_VERSION = "0.0.1"
 
-var (
-	host         string
-	validFrom    string
-	validFor     time.Duration
-	isCA         bool
-	rsaBits      int
-	ecdsaCurve   string
-	ed25519Key   bool
-	printVersion bool
-	printUsage   bool
-)
+// host is a global variable that holds the comma-separated hostnames and IPs to generate a certificate for.
+var host string
 
-// Initialize CLI flags
+// validFrom is a global variable that holds the creation date of the certificate.
+// It is formatted as Jan 1 15:04:05 2011.
+var validFrom string
+
+// validFor is a global variable that holds the duration that the certificate is valid for.
+// The default value is 365*24*time.Hour.
+var validFor time.Duration
+
+// isCA is a global variable that indicates whether the certificate is its own Certificate Authority.
+var isCA bool
+
+// rsaBits is a global variable that holds the size of RSA key to generate.
+// It is ignored if --ecdsa-curve is set. The default value is 2048.
+var rsaBits int
+
+// ecdsaCurve is a global variable that holds the ECDSA curve to use to generate a key.
+// Valid values are P224, P256 (recommended), P384, P521.
+var ecdsaCurve string
+
+// ed25519Key is a global variable that indicates whether to generate an Ed25519 key.
+var ed25519Key bool
+
+// printVersion is a global variable that indicates whether to print version information.
+var printVersion bool
+
+// printUsage is a global variable that indicates whether to print usage information.
+var printUsage bool
+
+// init initializes the CLI flags for the sscgen tool.
 func init() {
+	// host is a global variable that holds the comma-separated hostnames and IPs to generate a certificate for.
 	flag.StringVarP(&host, "host", "H", "", "Comma-separated hostnames and IPs to generate a certificate for")
+
+	// validFrom is a global variable that holds the creation date of the certificate.
+	// It is formatted as Jan 1 15:04:05 2011.
 	flag.StringVarP(&validFrom, "start-date", "s", "", "Set creation date (formatted as Jan 1 15:04:05 2011)")
+
+	// validFor is a global variable that holds the duration that the certificate is valid for.
+	// The default value is 365*24*time.Hour.
 	flag.DurationVarP(&validFor, "duration", "d", 365*24*time.Hour, "Duration that certificate is valid for")
+
+	// isCA is a global variable that indicates whether the certificate is its own Certificate Authority.
 	flag.BoolVarP(&isCA, "is-ca", "c", false, "Certificate is its own Certificate Authority")
+
+	// rsaBits is a global variable that holds the size of RSA key to generate.
+	// It is ignored if --ecdsa-curve is set. The default value is 2048.
 	flag.IntVarP(&rsaBits, "rsa-bits", "b", 2048, "Size of RSA key to generate. Ignored if --ecdsa-curve is set")
+
+	// ecdsaCurve is a global variable that holds the ECDSA curve to use to generate a key.
+	// Valid values are P224, P256 (recommended), P384, P521.
 	flag.StringVarP(&ecdsaCurve, "ecdsa-curve", "e", "", "ECDSA curve to use to generate a key. Valid values are P224, P256 (recommended), P384, P521")
+
+	// ed25519Key is a global variable that indicates whether to generate an Ed25519 key.
 	flag.BoolVar(&ed25519Key, "ed25519", false, "Generate an Ed25519 key")
+
+	// printVersion is a global variable that indicates whether to print version information.
 	flag.BoolVarP(&printVersion, "version", "v", false, "Print version information")
+
+	// printUsage is a global variable that indicates whether to print usage information.
 	flag.BoolVarP(&printUsage, "help", "h", false, "Print usage information")
 }
 
@@ -115,7 +155,7 @@ func main() {
 		}
 	}
 
-	notAfter := notBefore.Add(*validFor)
+	notAfter := notBefore.Add(validFor)
 
 	// Generate serial number
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
