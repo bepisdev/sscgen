@@ -1,17 +1,23 @@
 package main
 
 import (
+	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/pem"
 	"fmt"
-	flag "github.com/spf13/pflag"
+	"log"
 	"math/big"
 	"net"
 	"os"
 	"strings"
 	"time"
+
+	flag "github.com/spf13/pflag"
 )
 
 // Global constant to hold program version
@@ -46,7 +52,7 @@ func main() {
 	flag.Parse()
 
 	// Print version if flag is present
-	if flagVersion {
+	if printVersion {
 		fmt.Printf("%s\n", SSCGEN_VERSION)
 		os.Exit(0)
 	}
@@ -58,7 +64,7 @@ func main() {
 	}
 
 	// Sanity check host list
-	if len(*host) == 0 {
+	if len(host) == 0 {
 		log.Fatalf("Missing required --host parameter")
 	}
 
@@ -66,12 +72,12 @@ func main() {
 	var priv any
 	var err error
 
-	switch *ecdsaCurve {
+	switch ecdsaCurve {
 	case "":
-		if *ed25519Key {
+		if ed25519Key {
 			_, priv, err = ed25519.GenerateKey(rand.Reader)
 		} else {
-			priv, err = rsa.GenerateKey(rand.Reader, *rsaBits)
+			priv, err = rsa.GenerateKey(rand.Reader, rsaBits)
 		}
 	case "P224":
 		priv, err = ecdsa.GenerateKey(elliptic.P224(), rand.Reader)
@@ -82,7 +88,7 @@ func main() {
 	case "P521":
 		priv, err = ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
 	default:
-		log.Fatalf("Unrecognized elliptic curve: %q", *ecdsaCurve)
+		log.Fatalf("Unrecognized elliptic curve: %q", ecdsaCurve)
 	}
 
 	if err != nil {
@@ -100,10 +106,10 @@ func main() {
 	}
 
 	var notBefore time.Time
-	if len(*validFrom) == 0 {
+	if len(validFrom) == 0 {
 		notBefore = time.Now()
 	} else {
-		notBefore, err = time.Parse("Jan 2 15:04:05 2006", *validFrom)
+		notBefore, err = time.Parse("Jan 2 15:04:05 2006", validFrom)
 		if err != nil {
 			log.Fatalf("Failed to parse creation date: %v", err)
 		}
@@ -132,7 +138,7 @@ func main() {
 		BasicConstraintsValid: true,
 	}
 
-	hosts := strings.Split(*host, ",")
+	hosts := strings.Split(host, ",")
 	for _, h := range hosts {
 		if ip := net.ParseIP(h); ip != nil {
 			template.IPAddresses = append(template.IPAddresses, ip)
@@ -142,7 +148,7 @@ func main() {
 	}
 
 	// Set CA flag
-	if *isCA {
+	if isCA {
 		template.IsCA = true
 		template.KeyUsage |= x509.KeyUsageCertSign
 	}
