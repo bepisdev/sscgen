@@ -26,7 +26,7 @@ const SSCGEN_VERSION = "0.0.1"
 var (
 	host         string
 	validFrom    string
-	validFor     *time.Duration
+	validFor     time.Duration
 	isCA         bool
 	rsaBits      int
 	ecdsaCurve   string
@@ -39,7 +39,7 @@ var (
 func init() {
 	flag.StringVarP(&host, "host", "H", "", "Comma-separated hostnames and IPs to generate a certificate for")
 	flag.StringVarP(&validFrom, "start-date", "s", "", "Set creation date (formatted as Jan 1 15:04:05 2011)")
-	flag.DurationVarP(&validFor, "duration", 365*24*time.Hour, "Duration that certificate is valid for")
+	flag.DurationVarP(&validFor, "duration", "d", 365*24*time.Hour, "Duration that certificate is valid for")
 	flag.BoolVarP(&isCA, "is-ca", "c", false, "Certificate is its own Certificate Authority")
 	flag.IntVarP(&rsaBits, "rsa-bits", "b", 2048, "Size of RSA key to generate. Ignored if --ecdsa-curve is set")
 	flag.StringVarP(&ecdsaCurve, "ecdsa-curve", "e", "", "ECDSA curve to use to generate a key. Valid values are P224, P256 (recommended), P384, P521")
