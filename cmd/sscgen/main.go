@@ -31,8 +31,6 @@ func init() {
   flag.BoolVarP(&printUsage, "help", "h", false, "Print usage information")
 }
 
-func generatePublicKey(priv any) any {
-  // TODO: Generate public key  
-}
+
 
 func main() {}
