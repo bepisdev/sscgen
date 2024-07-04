@@ -1,72 +1,69 @@
 package main
 
 import (
-  flag "github.com/spf13/pflag"
-  "time"
-  "fmt"
-  "os"
-  "strings"
-  "net"
-  "math/big"
-  "crypto/elliptic"
+	"crypto/elliptic"
 	"crypto/rand"
-  "crypto/x509"
+	"crypto/x509"
 	"crypto/x509/pkix"
+	"fmt"
+	flag "github.com/spf13/pflag"
+	"math/big"
+	"net"
+	"os"
+	"strings"
+	"time"
 )
 
 // Global constant to hold program version
 const SSCGEN_VERSION = "0.0.1"
 
 var (
-	host string
-	validFrom string
-	validFor *time.Duration
-	isCA  bool
-	rsaBits int
-	ecdsaCurve string
-	ed25519Key bool
-  printVersion bool
-  printUsage bool
+	host         string
+	validFrom    string
+	validFor     *time.Duration
+	isCA         bool
+	rsaBits      int
+	ecdsaCurve   string
+	ed25519Key   bool
+	printVersion bool
+	printUsage   bool
 )
-
 
 // Initialize CLI flags
 func init() {
-  flag.StringVarP(&host, "host", "H", "", "Comma-separated hostnames and IPs to generate a certificate for")
-  flag.StringVarP(&validFrom, "start-date", "s", "", "Set creation date (formatted as Jan 1 15:04:05 2011)")
-  flag.DurationVarP(&validFor, "duration", 365*24*time.Hour, "Duration that certificate is valid for")
-  flag.BoolVarP(&isCA, "is-ca", "c", false, "Certificate is its own Certificate Authority")
-  flag.IntVarP(&ecdsaCurve, "rsa-bits", "b", 2048, "Size of RSA key to generate. Ignored if --ecdsa-curve is set")
-  flag.StringVarP(&ecdsaCurve, "ecdsa-curve", "e", "", "ECDSA curve to use to generate a key. Valid values are P224, P256 (recommended), P384, P521")
-  flag.BoolVar(&ed25519Key, "ed25519", false, "Generate an Ed25519 key")
-  flag.BoolVarP(&flagVersion, "version", "v", false, "Print version information")
-  flag.BoolVarP(&printUsage, "help", "h", false, "Print usage information")
+	flag.StringVarP(&host, "host", "H", "", "Comma-separated hostnames and IPs to generate a certificate for")
+	flag.StringVarP(&validFrom, "start-date", "s", "", "Set creation date (formatted as Jan 1 15:04:05 2011)")
+	flag.DurationVarP(&validFor, "duration", 365*24*time.Hour, "Duration that certificate is valid for")
+	flag.BoolVarP(&isCA, "is-ca", "c", false, "Certificate is its own Certificate Authority")
+	flag.IntVarP(&ecdsaCurve, "rsa-bits", "b", 2048, "Size of RSA key to generate. Ignored if --ecdsa-curve is set")
+	flag.StringVarP(&ecdsaCurve, "ecdsa-curve", "e", "", "ECDSA curve to use to generate a key. Valid values are P224, P256 (recommended), P384, P521")
+	flag.BoolVar(&ed25519Key, "ed25519", false, "Generate an Ed25519 key")
+	flag.BoolVarP(&flagVersion, "version", "v", false, "Print version information")
+	flag.BoolVarP(&printUsage, "help", "h", false, "Print usage information")
 }
 
-
-
 func main() {
-  flag.Parse()
+	flag.Parse()
 
-  // Print version if flag is present
-  if flagVersion {
-    fmt.Printf("%s\n", SSCGEN_VERSION)
-    os.Exit(0)
-  } 
-  
-  // Print usage if flag is present
-  if printUsage {
-    flag.Usage()
-    os.Exit(0)
-  } 
+	// Print version if flag is present
+	if flagVersion {
+		fmt.Printf("%s\n", SSCGEN_VERSION)
+		os.Exit(0)
+	}
 
-  // Sanity check host list
-  if len(*host) == 0 {
-    log.Fatalf("Missing required --host parameter")
-  }
+	// Print usage if flag is present
+	if printUsage {
+		flag.Usage()
+		os.Exit(0)
+	}
 
-  // Generate private key based on --ecdsa-curve
-  var priv any
+	// Sanity check host list
+	if len(*host) == 0 {
+		log.Fatalf("Missing required --host parameter")
+	}
+
+	// Generate private key based on --ecdsa-curve
+	var priv any
 	var err error
 
 	switch *ecdsaCurve {
@@ -92,7 +89,7 @@ func main() {
 		log.Fatalf("Failed to generate private key: %v", err)
 	}
 
-  // ECDSA, ED25519 and RSA subject keys should have the DigitalSignature
+	// ECDSA, ED25519 and RSA subject keys should have the DigitalSignature
 	// KeyUsage bits set in the x509.Certificate template
 	keyUsage := x509.KeyUsageDigitalSignature
 	// Only RSA subject keys should have the KeyEncipherment KeyUsage bits set. In
@@ -102,7 +99,7 @@ func main() {
 		keyUsage |= x509.KeyUsageKeyEncipherment
 	}
 
-  var notBefore time.Time
+	var notBefore time.Time
 	if len(*validFrom) == 0 {
 		notBefore = time.Now()
 	} else {
@@ -112,17 +109,17 @@ func main() {
 		}
 	}
 
-  notAfter := notBefore.Add(*validFor)
+	notAfter := notBefore.Add(*validFor)
 
-  // Generate serial number
-  serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	// Generate serial number
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
 		log.Fatalf("Failed to generate serial number: %v", err)
 	}
 
-  // Put together certificate template
-  template := x509.Certificate{
+	// Put together certificate template
+	template := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			Organization: []string{"Acme Co"},
@@ -135,7 +132,7 @@ func main() {
 		BasicConstraintsValid: true,
 	}
 
-  hosts := strings.Split(*host, ",")
+	hosts := strings.Split(*host, ",")
 	for _, h := range hosts {
 		if ip := net.ParseIP(h); ip != nil {
 			template.IPAddresses = append(template.IPAddresses, ip)
@@ -144,18 +141,18 @@ func main() {
 		}
 	}
 
-  // Set CA flag
+	// Set CA flag
 	if *isCA {
 		template.IsCA = true
 		template.KeyUsage |= x509.KeyUsageCertSign
 	}
 
-  derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, publicKey(priv), priv)
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, publicKey(priv), priv)
 	if err != nil {
 		log.Fatalf("Failed to create certificate: %v", err)
 	}
 
-  // Write certificate file
+	// Write certificate file
 	certOut, err := os.Create("cert.pem")
 	if err != nil {
 		log.Fatalf("Failed to open cert.pem for writing: %v", err)
@@ -168,7 +165,7 @@ func main() {
 	}
 	log.Print("wrote cert.pem\n")
 
-  // Write key file
+	// Write key file
 	keyOut, err := os.OpenFile("key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		log.Fatalf("Failed to open key.pem for writing: %v", err)
@@ -183,11 +180,9 @@ func main() {
 	if err := keyOut.Close(); err != nil {
 		log.Fatalf("Error closing key.pem: %v", err)
 	}
-  
+
 	log.Print("wrote key.pem\n")
 
-  // Exit successfully
-  os.Exit(0)
+	// Exit successfully
+	os.Exit(0)
 }
-
-
