@@ -11,7 +11,7 @@
 2. Clone the `sscgen` repository:
 
    ```sh
-   git clone https://github.com/joshburnsxyz/sscgen.git
+   git clone https://github.com/bepisdev/sscgen.git
    cd sscgen
    ```
 
